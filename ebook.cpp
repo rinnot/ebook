@@ -5,10 +5,10 @@
 
 using namespace std;
 
-class EBook {
+class EBookManager {
 public:
 
-    EBook()
+    EBookManager()
         : users_page_(MAX_USER_COUNT_ + 1, 0)
         , users_at_page_(MAX_PAGE_COUNT_ + 1, 0) {
     }
@@ -68,9 +68,7 @@ private:
 
     void UpdatePrefixSum() {
         prefix_sum_.resize(users_at_page_.size() + 1, 0);
-        for (size_t i = 1; i < prefix_sum_.size(); ++i) {
-            prefix_sum_[i] = prefix_sum_[i - 1] + users_at_page_[i - 1];
-        }
+        partial_sum(users_at_page_.begin(), users_at_page_.end(), prefix_sum_.begin() + 1);
     }
 };
 
@@ -81,16 +79,20 @@ int main() {
     string command;
     int user, page;
 
-    EBook book;
+    EBookManager book;
 
     cout << setprecision(6);
     for (int i = 0; i < query_number; ++i) {
         cin >> command >> user;
         if (command == "READ"s) {
             cin >> page;
+
             book.ReadPage(user, page);
+
         } else if (command == "CHEER"s) {
+
             cout << book.CheerUser(user) << endl;
+            
         }
     }
 }
