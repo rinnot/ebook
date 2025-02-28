@@ -7,14 +7,13 @@ using namespace std;
 
 class EBookManager {
 public:
-
     EBookManager()
         : users_page_(MAX_USER_COUNT_ + 1, 0)
-        , users_at_page_(MAX_PAGE_COUNT_ + 1, 0) {
+        , users_at_page_(MAX_PAGE_COUNT_ + 1, 0)
+        , prefix_sum_(MAX_PAGE_COUNT_ + 2, 0) {
     }
 
-    void ReadPage(const int user, const int page) {
-
+    void ReadPage(int user, int page) {
         if (CheckUserExists(user)) {
             int old_page = users_page_[user];
             users_page_[user] = page;
@@ -29,7 +28,7 @@ public:
         UpdatePrefixSum();
     }
 
-    double CheerUser(const int user) const {
+    double CheerUser(int user) const {
         if (!CheckUserExists(user)) {
             return 0.;
         }
@@ -38,9 +37,7 @@ public:
         }
 
         int page = users_page_[user];
-        
-        // Сумма от 0 до page - 1
-        int less_users = prefix_sum_[page];
+        int less_users = prefix_sum_[page];  // Сумма от 0 до page - 1
 
         return static_cast<double>(less_users) / (user_count_ - 1);
     }
@@ -54,45 +51,42 @@ private:
     int user_count_ = 0;
 
     bool CheckUserExists(int user) const {
-        if (user_count_ == 0) {
-            return false;
-        }
-        if (user < users_page_.size()) {
-            if (users_page_[user] != 0) {
-                return true;
-            }
-            return false;
-        }
-        return false;
+        return user_count_ != 0 && user < users_page_.size() && users_page_[user] != 0;
     }
 
     void UpdatePrefixSum() {
-        prefix_sum_.resize(users_at_page_.size() + 1, 0);
         partial_sum(users_at_page_.begin(), users_at_page_.end(), prefix_sum_.begin() + 1);
     }
 };
 
-int main() {
-    int query_number;
-    cin >> query_number;
+void ProcessRequestsFromStream(std::istream& input, EBookManager& book) {
+    size_t count;
+    input >> count;
 
-    string command;
-    int user, page;
-
-    EBookManager book;
-
+    ios::fmtflags old_flags = cout.flags();
     cout << setprecision(6);
-    for (int i = 0; i < query_number; ++i) {
-        cin >> command >> user;
-        if (command == "READ"s) {
-            cin >> page;
 
+    for (size_t i = 0; i < count; ++i) {
+        std::string type;
+        input >> type;
+
+        if (type == "CHEER") {
+            int user;
+            input >> user;
+            double cheer = book.CheerUser(user);
+            cout << cheer << endl;
+        } else if (type == "READ") {
+            int user, page;
+            input >> user >> page;
             book.ReadPage(user, page);
-
-        } else if (command == "CHEER"s) {
-
-            cout << book.CheerUser(user) << endl;
-            
         }
     }
+
+    cout.flags(old_flags);
+}
+
+int main() {
+    EBookManager book;
+    ProcessRequestsFromStream(cin, book); 
+    return 0;
 }
